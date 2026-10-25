@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>代办番茄钟</title>
+  <style>
+    :root {
+      --bg: #f7f8fa;
+      --paper: #ffffff;
+      --ink: #1f2937;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --accent: #2563eb;
+      --accent-soft: #eff6ff;
+      --done: #059669;
+      --danger: #dc2626;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+      padding: 40px 16px 56px;
+    }
+
+    .wrap {
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    header {
+      margin-bottom: 24px;
+    }
+
+    header h1 {
+      font-size: 1.6rem;
+      font-weight: 650;
+    }
+
+    header p {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    form {
+      display: grid;
+      gap: 12px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 10px;
+      padding: 11px 12px;
+      font-size: 1rem;
+      color: var(--ink);
+      outline: none;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .btn {
+      border: 1px solid transparent;
+      border-radius: 10px;
+      padding: 11px 14px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: none;
+    }
+
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-ghost {
+      background: #f3f4f6;
+      color: var(--ink);
+    }
+
+    .btn-start {
+      background: var(--accent-soft);
+      color: var(--accent);
+      padding: 7px 12px;
+      font-size: 0.86rem;
+    }
+
+    .btn-danger {
+      color: var(--danger);
+      padding: 7px 8px;
+      font-size: 0.86rem;
+    }
+
+    .timer {
+      text-align: center;
+      display: none;
+    }
+
+    .timer.active { display: block; }
+
+    .timer .name {
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+
+    .clock {
+      font-variant-numeric: tabular-nums;
+      font-size: clamp(2.8rem, 9vw, 4rem);
+      font-weight: 650;
+      letter-spacing: 0.04em;
+      line-height: 1.1;
+      margin: 10px 0 16px;
+    }
+
+    .list-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 8px;
+    }
+
+    .list-title h2 { font-size: 1rem; }
+    .list-title span { color: var(--muted); font-size: 0.85rem; }
+
+    .empty {
+      color: var(--muted);
+      text-align: center;
+      padding: 20px 8px;
+    }
+
+    .todo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .todo:first-of-type { border-top: none; }
+
+    .check {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 1.5px solid #d1d5db;
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      color: transparent;
+      font-size: 12px;
+    }
+
+    .todo.done .check {
+      background: var(--done);
+      border-color: var(--done);
+      color: #fff;
+    }
+
+    .todo.running .check {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .meta { flex: 1; min-width: 0; }
+
+    .meta strong {
+      display: block;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .todo.done .meta strong {
+      text-decoration: line-through;
+      color: var(--muted);
+    }
+
+    .meta small {
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .actions {
+      display: flex;
+      gap: 4px;
+      flex: 0 0 auto;
+    }
+
+    .hint {
+      color: var(--danger);
+      font-size: 0.84rem;
+      min-height: 1.1em;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>代办番茄钟</h1>
+      <p>先把事项列出来，再选择先完成哪一项。倒计时结束或提前结束会自动勾选完成。</p>
+    </header>
+
+    <section class="card">
+      <form id="form">
+        <div>
+          <label for="name">代办名称</label>
+          <input id="name" type="text" maxlength="60" placeholder="例如：写周报" required />
+        </div>
+        <div class="row">
+          <div>
+            <label for="minutes">分钟</label>
+            <input id="minutes" type="number" min="0" max="180" value="25" />
+          </div>
+          <div>
+            <label for="seconds">秒</label>
+            <input id="seconds" type="number" min="0" max="59" value="0" />
+          </div>
+          <button class="btn btn-primary" id="addBtn" type="submit">添加</button>
+        </div>
+        <p class="hint" id="hint"></p>
+      </form>
+    </section>
+
+    <section class="card timer" id="timerCard">
+      <div class="name" id="runningName"></div>
+      <div class="clock" id="clock">00:00</div>
+      <button class="btn btn-ghost" id="stopBtn" type="button">提前结束</button>
+    </section>
+
+    <section class="card">
+      <div class="list-title">
+        <h2>代办事项</h2>
+        <span id="count">0 项</span>
+      </div>
+      <div id="list"></div>
+    </section>
+  </div>
+
+  <script>
+    const form = document.getElementById("form");
+    const nameInput = document.getElementById("name");
+    const minutesInput = document.getElementById("minutes");
+    const secondsInput = document.getElementById("seconds");
+    const hint = document.getElementById("hint");
+    const timerCard = document.getElementById("timerCard");
+    const runningName = document.getElementById("runningName");
+    const clock = document.getElementById("clock");
+    const stopBtn = document.getElementById("stopBtn");
+    const listEl = document.getElementById("list");
+    const countEl = document.getElementById("count");
+
+    const todos = [];
+    let timerId = null;
+    let remaining = 0;
+    let runningId = null;
+
+    function pad(n) {
+      return String(n).padStart(2, "0");
+    }
+
+    function formatTime(total) {
+      const m = Math.floor(total / 60);
+      const s = total % 60;
+      return pad(m) + ":" + pad(s);
+    }
+
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function render() {
+      const pending = todos.filter((t) => !t.done).length;
+      countEl.textContent = pending + " 项待完成";
+
+      if (!todos.length) {
+        listEl.innerHTML = '<p class="empty">先添加几项代办，再选择要开始的一项。</p>';
+        return;
+      }
+
+      listEl.innerHTML = todos.map((t) => {
+        const cls = t.done ? "todo done" : t.id === runningId ? "todo running" : "todo";
+        const status = t.done
+          ? "已完成 · " + t.planned
+          : t.id === runningId
+            ? "进行中 · 剩余 " + formatTime(remaining)
+            : t.planned;
+        const startBtn = t.done
+          ? ""
+          : `<button class="btn btn-start" type="button" data-start="${t.id}" ${runningId ? "disabled" : ""}>开始</button>`;
+        return `
+          <article class="${cls}">
+            <div class="check">✓</div>
+            <div class="meta">
+              <strong>${escapeHtml(t.name)}</strong>
+              <small>${status}</small>
+            </div>
+            <div class="actions">
+              ${startBtn}
+              <button class="btn btn-danger" type="button" data-delete="${t.id}">删除</button>
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    function setRunning(active) {
+      timerCard.classList.toggle("active", active);
+    }
+
+    function stopTimer() {
+      clearInterval(timerId);
+      timerId = null;
+      remaining = 0;
+      runningId = null;
+      setRunning(false);
+    }
+
+    function completeCurrent() {
+      const item = todos.find((t) => t.id === runningId);
+      if (item) item.done = true;
+      stopTimer();
+      render();
+    }
+
+    function startTodo(id) {
+      if (runningId) return;
+      const item = todos.find((t) => t.id === id);
+      if (!item || item.done) return;
+      runningId = id;
+      remaining = item.seconds;
+      clock.textContent = formatTime(remaining);
+      runningName.textContent = item.name;
+      setRunning(true);
+      clearInterval(timerId);
+      timerId = setInterval(() => {
+        remaining -= 1;
+        clock.textContent = formatTime(Math.max(remaining, 0));
+        render();
+        if (remaining <= 0) completeCurrent();
+      }, 1000);
+      render();
+    }
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      hint.textContent = "";
+      const name = nameInput.value.trim();
+      const minutes = Number(minutesInput.value || 0);
+      const seconds = Number(secondsInput.value || 0);
+      const total = minutes * 60 + seconds;
+      if (!name) {
+        hint.textContent = "请填写代办名称。";
+        return;
+      }
+      if (!Number.isFinite(total) || total <= 0) {
+        hint.textContent = "请设置大于 0 的时长。";
+        return;
+      }
+      todos.push({
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        name,
+        seconds: total,
+        planned: formatTime(total),
+        done: false,
+      });
+      nameInput.value = "";
+      nameInput.focus();
+      render();
+    });
+
+    stopBtn.addEventListener("click", () => {
+      if (!runningId) return;
+      completeCurrent();
+    });
+
+    listEl.addEventListener("click", (e) => {
+      const start = e.target.closest("[data-start]");
+      if (start) {
+        startTodo(start.getAttribute("data-start"));
+        return;
+      }
+      const del = e.target.closest("[data-delete]");
+      if (!del) return;
+      const id = del.getAttribute("data-delete");
+      if (id === runningId) stopTimer();
+      const index = todos.findIndex((t) => t.id === id);
+      if (index >= 0) todos.splice(index, 1);
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>
